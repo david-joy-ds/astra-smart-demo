@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>home</title>
+</head>
+<body>
+    <h1> App Home ! </h1>
+    {% for post in posts %}
+        <h1> {{post.token}} {{post.value}} </h1>
+    {% endfor %}
+    <form>
+        <input type="search" placeholder="Search...">
+    </form>
+</body>
+</html>

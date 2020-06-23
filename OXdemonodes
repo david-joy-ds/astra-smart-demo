@@ -1,0 +1,81 @@
+OX demo nodes : 
+
+node 1 : 10.101.32.192
+node 2 : 10.101.34.36
+node 3 : 10.101.32.26
+
+other nodes : 
+
+node 4 : 10.101.32.135
+node 5 : 10.101.36.123
+node 6 : 10.101.33.238
+
+opscenter : 10.101.33.104
+
+http://10.101.33.104:8888/opscenter/lcm.html#/
+
+
+
+kubectl create ns my-db-ns
+kubectl -n my-db-ns apply -f ./cass-storage-class.yaml
+kubectl -n my-db-ns apply -f ./cass-operator-manifests.yaml
+kubectl -n my-db-ns create secret generic superuser-secret --from-literal=username=cassadmin --from-literal=password=datastax
+kubectl -n my-db-ns apply -f ./demo-cass-datacenter-one-node-west.yaml
+kubectl -n my-db-ns exec -it demo-k8s-cluster-cassandra-dcwest-r1-sts-0 /bin/bash
+# use cqlsh to login and check out tables, exit the shell
+# edit demo-nosqlbench.yaml and make sure the command line parameters are correctly aligned to your DSE cluster
+kubectl -n my-db-ns apply -f ./demo-nosqlbench.yaml
+kubectl -n my-db-ns wait --for=condition=complete --timeout=10m job/iot
+kubectl -n my-db-ns logs --selector job-name=iot --tail=200 > demo_dsbench.log.`date '+%F_%T'` 
+kubectl -n my-db-ns delete -f ./demo-nosqlbench.yaml
+kubectl -n my-db-ns delete -f ./demo-cass-datacenter-one-node-west.yaml
+kubectl -n my-db-ns delete -f ./cass-operator-manifests.yaml
+kubectl -n my-db-ns delete -f ./cass-storage-class.yaml
+
+
+grep --color 'node-state=[a-zA-Z]'
+
+
+Measurement date	Station code	Address	Latitude	Longitude	SO2	NO2	O3	CO	PM10	PM2.5
+
+create keyspace test_data WITH REPLICATION = {'class': 'NetworkTopologyStrategy', 'Analytics': '3', 'Cassandra': '3' };
+
+create table test_data.measurement_summary (
+    measurement_date text,
+    station_code int,
+    address text,
+    latitude float,
+    Longitude float,
+    SO2 float,
+    NO2 float,
+    O3 float,
+    CO float,
+    PM10 float,
+    PM2_5 float,
+    primary key((station_code),measurement_date)
+);
+
+
+dsefs://10.101.32.140:5598/newdirectory/measurement_summary.csv
+
+val df = spark.read.format("csv").option("inferSchema","True").load("dsefs://10.101.32.140:5598/newdirectory/measurement_summary_1.csv").toDF("measurement_date","station_code","address","co","latitude","longitude","no2","o3","pm10","pm2_5","so2")
+
+df.schema 
+
+df.show()
+
+# basic filter 
+
+df.filter(df("station_code") === 101).show(5)
+
+#basic filter
+df.filter(df("station_code") === 101).count()
+
+# basic filter 
+df.filter(df("co") > 35).count()
+
+# find max co in each station_code 
+
+df.groupBy("station_code").agg(max("co")).show()
+
+df.write.cassandraFormat(keyspace="test_data",table="measurement_summary").save()
