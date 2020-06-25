@@ -38,11 +38,13 @@ table_response = ak.createTable(table_url,headers1)
 print(table_response)
 
 # Use table 
-insert_url = keyspace_url+"/dj_keyspace/tables/test_table/rows"
+insert_url = keyspace_url+"/dj_keyspace/tables/t1_table/rows"
 table_insert = ai.insertTable(insert_url,headers1)
 print(table_insert)
 
 #read Table 
-read_url = keyspace_url+"/dj_keyspace/tables/test_table/rows/2"
+read_url = keyspace_url+"/dj_keyspace/tables/twitterdata/rows/bitcoinconnect"
 table_read = ai.readTable(read_url,headers1)
 print(table_read)
+
+
